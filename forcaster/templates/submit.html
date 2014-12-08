@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+ 
+{% block content %}
+  <h2>Submit training data</h2>
+ 
+  {% if success %}
+    <p>Thank you for your trainingData. We'll get back to you shortly.</p>
+ 
+  {% else %}
+ 
+    {% for trainingData in form.dataFile.errors %}
+      <div class="flash">{{ trainingData }}</div>
+    {% endfor %}
+ 
+    {% for trainingData in form.trainingMode.errors %}
+      <div class="flash">{{ trainingData }}</div>
+    {% endfor %}
+ 
+    {% for trainingData in form.trainingData.errors %}
+      <div class="flash">{{ trainingData }}</div>
+    {% endfor %}
+ 
+    <form action="{{ url_for('submit') }}" method=post>
+      {{ form.hidden_tag() }}
+ 
+      {{ form.dataFile.label }}
+      {{ form.dataFile }}
+ 
+      {{ form.trainingMode.label }}
+      {{ form.trainingMode }}
+ 
+      {{ form.trainingData.label }}
+      {{ form.trainingData }}
+ 
+      {{ form.submit }}
+    </form>
+ 
+  {% endif %}
+{% endblock %}
