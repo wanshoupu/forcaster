@@ -20,17 +20,15 @@
       <div class="flash">{{ trainingData }}</div>
     {% endfor %}
  
-    <form action="{{ url_for('submit') }}" method=post>
+    <form action="{{ url_for('submit') }}" enctype="multipart/form-data" method=post>
       {{ form.hidden_tag() }}
  
-      {{ form.dataFile.label }}
-      {{ form.dataFile }}
- 
+      <input type=file name=dataFile></input><br>
       {{ form.trainingMode.label }}
-      {{ form.trainingMode }}
+      {{ form.trainingMode }}<br>
  
       {{ form.trainingData.label }}
-      {{ form.trainingData }}
+      {{ form.trainingData }}<br>
  
       {{ form.submit }}
     </form>
