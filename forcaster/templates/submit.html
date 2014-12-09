@@ -8,28 +8,16 @@
  
   {% else %}
  
-    {% for trainingData in form.dataFile.errors %}
-      <div class="flash">{{ trainingData }}</div>
-    {% endfor %}
- 
-    {% for trainingData in form.trainingMode.errors %}
-      <div class="flash">{{ trainingData }}</div>
-    {% endfor %}
- 
-    {% for trainingData in form.trainingData.errors %}
-      <div class="flash">{{ trainingData }}</div>
-    {% endfor %}
- 
+    <p><b>Training data. </b> <br><i>Note: either upload a file or fill the textbox but NOT both.</i></p>
     <form action="{{ url_for('submit') }}" enctype="multipart/form-data" method=post>
       {{ form.hidden_tag() }}
  
-      <input type=file name=dataFile></input><br>
-      {{ form.trainingMode.label }}
-      {{ form.trainingMode }}<br>
- 
-      {{ form.trainingData.label }}
-      {{ form.trainingData }}<br>
- 
+      {{ form.dataFile.label }}<br>
+      <input type=file name=dataFile></input><br><br>
+      {{ form.trainingData.label }}<br>
+      {{ form.trainingData(rows=25,cols=60) }}<br><br>
+      {{ form.trainingMode.label }}<br>
+      {{ form.trainingMode }}<br><br>
       {{ form.submit }}
     </form>
  
