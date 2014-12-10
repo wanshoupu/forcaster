@@ -9,7 +9,7 @@ from datetime import datetime as dt
 UPLOAD_FOLDER = '~/tmp'
 ALLOWED_EXTENSIONS = set(['txt', 'csv', 'json'])
 
-app = Flask(__name__) 
+app = Flask(__name__, static_url_path = '', static_folder = 'resources')
 app.secret_key = 'development key'  
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER 
 
@@ -46,10 +46,13 @@ def submit():
 
       if trainingdata :
         timestampes = parseJson(trainingdata)
-        trainer.train(timestampes)
-#      app.logger.info(trainingdata)
- 
-      return render_template('submit.html', success=True)
+        trainingPlot = trainer.train(timestampes)
+        import time
+        imgname = time.strftime("%Y%m%d-%H%M%S")+'.png'
+        app.logger.info(imgname)
+        trainingPlot.savefig('resources/'+imgname, bbox_inches='tight')
+
+      return render_template('submit.html', success=True, imgname=imgname)
  
   elif request.method == 'GET':
     return render_template('submit.html', form=form)

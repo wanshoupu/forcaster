@@ -4,7 +4,8 @@
   <h2>Submit training data</h2>
  
   {% if success %}
-    <p>Thank you for your trainingData. We'll get back to you shortly.</p>
+    <p>Thank you for your trainingData. The training result is as follows.</p>
+    <img src="{{ url_for('static', filename = imgname) }}" alt="Training result" style="width:608px;height:456">
  
   {% else %}
  
@@ -15,7 +16,7 @@
       {{ form.dataFile.label }}<br>
       <input type=file name=dataFile></input><br><br>
       {{ form.trainingData.label }}<br>
-      {{ form.trainingData(rows=25,cols=60) }}<br><br>
+      {{ form.trainingData(rows=20,cols=60) }}<br><br>
       {{ form.trainingMode.label }}<br>
       {{ form.trainingMode }}<br><br>
       {{ form.submit }}

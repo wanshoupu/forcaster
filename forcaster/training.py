@@ -1,6 +1,6 @@
 from itertools import groupby
 from datetime import datetime as dt
-from analyzer import groupByWeek, groupByHour,toNumHours,STARTTIME,FIG_DIR
+from analyzer import plot,groupByWeek, groupByHour,toNumHours,STARTTIME,FIG_DIR
 
 STARTTIME = dt(2012,1,1,0,0,0)
 
@@ -24,12 +24,16 @@ class Trainer(object):
         #get hourly count
 #        self.hourlyCount = groupByHour(timestamps)
         self.trained = True
+        self.predict(self.weeklyCount[0])
+        plt = plot([
+            {'data' : groupByWeek(timestamps), 'title' : 'Demand curve', 'ylabel' : 'Request count', 'xlabel' : 'Week of year'},
+            {'data' : [self.weeklyCount[0],self.predict(self.weeklyCount[0])], 'ylabel' : 'Prediction', 'xlabel' : 'Week of year'},
+            ])
+        return plt
 
     def predict(self, timestamps):
         if not self.trained:
             return None
-        if self.logger:
-            self.logger.info(timestamps)
         numHours = toNumHours(timestamps)
 
         if self.logger:
