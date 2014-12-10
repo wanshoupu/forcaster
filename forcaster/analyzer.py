@@ -1,41 +1,50 @@
 #!/usr/bin/env python
+import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime as dt
+from datetime import timedelta as td
+STARTTIME = dt(2012,1,1,0,0,0)
+FIG_DIR='resources/'
 
 def parse(timestamp):
 #    keys = ['mo', 'dd', 'hh', 'mi', 'ss']
-    from datetime import datetime as dt
     dt.strptime(timestamp[0:19], '%Y-%m-%dT%H:%M:%S')
     import re
     return dt.strptime(timestamp[0:19], '%Y-%m-%dT%H:%M:%S')
 
-def loadInput():
-    import sys
+def parseJson(str):
     import json
-    import unicodedata
+    return [parse(ts) for ts in json.loads(str)]
+
+def loadFile():
+    import sys
     inputfile = sys.argv[1]
     with open(inputfile, 'r') as f:
-        line = f.readlines()[0]
-        return [parse(ts) for ts in json.loads(line)]
+        return f.readlines()[0]
 
 def groupByHour(timestamp):
     from itertools import groupby
     truncDatetime = [d.replace(minute=0, second=0, microsecond=0) for d in timestamp]
-    from datetime import datetime as dt
-    STARTTIME = dt(2012,1,1,0,0,0)
-    frequency = [(abs(key-STARTTIME).total_seconds() / 3600.0, len(list(group))) for key, group in groupby(truncDatetime)]
-    return zip(*frequency)
+    frequency = [(key, len(list(group))) for key, group in groupby(truncDatetime)]
+    return [list(f) for f in zip(*frequency)]
+
+def isoYearStart(iso_year):
+    fourth_jan = dt(iso_year, 1, 4)
+    delta = td(fourth_jan.isoweekday()-1)
+    return fourth_jan - delta 
+
+def isocalendarToDate(iso_year, iso_week, iso_day):
+    year_start = isoYearStart(iso_year)
+    return year_start + td(days=iso_day-1, weeks=iso_week-1)
 
 def groupByWeek(timestamp):
     from itertools import groupby
-    truncDatetime = [d.isocalendar()[1] for d in timestamp]
-    from datetime import datetime as dt
-    STARTTIME = dt(2012,1,1,0,0,0)
+    isocalendar = [d.isocalendar() for d in timestamp]
+    truncDatetime = [isocalendarToDate(*i) for i in isocalendar]
     frequency = [(key, len(list(group))) for key, group in groupby(truncDatetime)]
-    return zip(*frequency)
+    return [list(f) for f in zip(*frequency)]
 
 def hist(data):
-    import matplotlib.pyplot as plt
-    import numpy as np
-
     fig = plt.figure()
     length = len(data)
     import math
@@ -45,14 +54,10 @@ def hist(data):
         plt.subplot(width, height, d+1)
         plt.title(data[d]['title'])
         n, bins, patches = plt.hist(data[d]['data'], 60, normed=0, facecolor='green', alpha=0.75)
-
-    plt.show()
+    return plt
 
 
 def scatter(data):
-    import matplotlib.pyplot as plt
-    import numpy as np
-
     fig = plt.figure()
     length = len(data)
     import math
@@ -68,13 +73,12 @@ def scatter(data):
         H, xedges, yedges = np.histogram2d(data[d]['data'][0], data[d]['data'][1], bins=(distincts))
         plt.imshow(H, interpolation='nearest', origin='low', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
         plt.title(data[d]['title'])
+    return plt
 
-    plt.show()
+def toNumHours(timestamps):
+    return list(abs(t-STARTTIME).total_seconds() / 3600.0 for t in timestamps)
 
 def plot(data):
-    import matplotlib.pyplot as plt
-    import numpy as np
-
     fig = plt.figure()
     length = len(data)
     import math
@@ -89,35 +93,34 @@ def plot(data):
             ax = plt.subplot(width, height, d+1, sharey = ax)
         else:
             plt.subplot(width, height, d+1)
-        plt.plot(data[d]['data'][0], data[d]['data'][1], 'g-')
+
+        hours = toNumHours(data[d]['data'][0])
+        plt.plot(hours, data[d]['data'][1], 'g-')
         if data[d].has_key('ylabel'):
             plt.ylabel(data[d]['ylabel'])
         if data[d].has_key('xlabel'):
             plt.xlabel(data[d]['xlabel'])
         if data[d].has_key('title'):
             plt.title(data[d]['title'])
+    return plt
 
-    plt.show()
-
-
-def main():
+if __name__ == '__main__':
     #datetime
-    input = loadInput()
-    plot([
+    input = parseJson(loadFile())
+    plt = plot([
         {'data' : groupByWeek(input), 'title' : 'Demand curve', 'ylabel' : 'Request count', 'xlabel' : 'Week of year'},
         {'data' : groupByHour(input), 'ylabel' : 'Request count', 'xlabel' : 'Hour since 2012-01-01'},
         ])
+    plt.savefig(FIG_DIR+'demand_curve.png', bbox_inches='tight')
 
-    hist([{'data' : [y.weekday() for y in input], 'title' : 'Day of week'},
+    plt = hist([{'data' : [y.weekday() for y in input], 'title' : 'Day of week'},
         {'data' : [y.day for y in input],'title' : 'Day of month'},
         {'data' : [y.hour for y in input],'title' : 'Hour of day'}, 
         {'data' : [y.isocalendar()[1] for y in input], 'title' : 'Week of year'}, 
         ])
+    plt.savefig(FIG_DIR+'hist_pattern.png', bbox_inches='tight')
 
-    scatter([{'data' : [[y.weekday() for y in input], [y.hour for y in input], ], 'title' : 'Hour vs day of week'},
+    plt = scatter([{'data' : [[y.weekday() for y in input], [y.hour for y in input], ], 'title' : 'Hour vs day of week'},
         {'data' : [[y.day for y in input], [y.hour for y in input],],'title' : 'hour vs day of month'},
         ])
-
-    return input
-
-main()
+    plt.savefig(FIG_DIR+'week_hour_pattern.png', bbox_inches='tight')
