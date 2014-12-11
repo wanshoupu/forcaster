@@ -6,12 +6,17 @@ from training import Trainer
 from analyzer import parseJson,plot,groupByHour
 from datetime import datetime as dt
 
-ALLOWED_EXTENSIONS = set(['txt', 'csv', 'json'])
+UPLOAD_FOLDER = 'resources'
 
-app = Flask(__name__, static_url_path = '', static_folder = 'resources')
+import os
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+app = Flask(__name__, static_url_path = '', static_folder = UPLOAD_FOLDER)
 app.secret_key = 'development key'  
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER 
 
-trainer = Trainer(app.logger)
+trainer = Trainer(app)
 timestampes = []
 
 @app.route('/')
@@ -52,7 +57,7 @@ def submit():
     return render_template('submit.html', form=form)
 
 if __name__ == '__main__':
-  handler = RotatingFileHandler('foo.log', maxBytes=10000, backupCount=1)
+  handler = RotatingFileHandler('/tmp/foo.log', maxBytes=10000, backupCount=1)
   handler.setLevel(logging.INFO)
   app.logger.addHandler(handler)
 

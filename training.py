@@ -22,9 +22,10 @@ def ftrzWk(timestamps):
 
 class Trainer(object):
     # data is list of timestamps in json format
-    def __init__(self, logger):
+    def __init__(self, app):
         self.trained = False
-        self.logger = logger
+        self.app = app
+        self.logger = app.logger
 
     def train(self, timestamps):
         # features is a list of data points, each data point is a tuple of binary features
@@ -43,8 +44,6 @@ class Trainer(object):
         if self.logger:
             self.logger.info(self.wkdHrMdl.coef_)
         str1 = self.predict(hourlydata[0])
-        self.logger.info('Shoupu Wan')
-        self.logger.info(str1)
 
         self.trained = True
 
