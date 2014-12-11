@@ -22,9 +22,19 @@ def loadFile():
     with open(inputfile, 'r') as f:
         return f.readlines()[0]
 
+def truncByHour(timestamp):
+    from itertools import groupby
+    return [d.replace(hour=0,minute=0, second=0, microsecond=0) for d in timestamp]
+
 def groupByHour(timestamp):
     from itertools import groupby
     truncDatetime = [d.replace(minute=0, second=0, microsecond=0) for d in timestamp]
+    frequency = [(key, len(list(group))) for key, group in groupby(truncDatetime)]
+    return [list(f) for f in zip(*frequency)]
+
+def groupByDay(timestamp):
+    from itertools import groupby
+    truncDatetime = [d.replace(hour=0,minute=0, second=0, microsecond=0) for d in timestamp]
     frequency = [(key, len(list(group))) for key, group in groupby(truncDatetime)]
     return [list(f) for f in zip(*frequency)]
 
@@ -79,11 +89,12 @@ def toNumHours(timestamps):
     return list(abs(t-STARTTIME).total_seconds() / 3600.0 for t in timestamps)
 
 def plot(data):
+    symbs = ['.', '-', '--', '^']
     fig = plt.figure()
     length = len(data)
     for d in range(0,length):
         hours = toNumHours(data[d]['data'][0])
-        plt.plot(hours, data[d]['data'][1], label=data[d]['label'])
+        plt.plot(hours, data[d]['data'][1], symbs[d%len(symbs)], label=data[d]['label'])
         if data[d].has_key('ylabel'):
             plt.ylabel(data[d]['ylabel'])
         if data[d].has_key('xlabel'):

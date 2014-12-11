@@ -5,9 +5,9 @@
  
   {% if success %}
     <p>Thank you for your trainingData. The training result is as follows.</p>
-    <img src="{{ url_for('static', filename = img1) }}" alt="Weekly training result" style="width:608px;height:456">
-    <img src="{{ url_for('static', filename = img2) }}" alt="Overall training result" style="width:608px;height:456">
- 
+    <img src="{{ url_for('static', filename = img1) }}" alt="Weekly training result" style="width:406px;height:328">
+    <img src="{{ url_for('static', filename = img2) }}" alt="Day hour training result" style="width:406px;height:328"><br>
+  
   {% else %}
  
     <p><b>Training data. </b> <br><i>Note: either upload a file or fill the textbox but NOT both.</i></p>
