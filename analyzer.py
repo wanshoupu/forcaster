@@ -40,7 +40,7 @@ def isocalendarToDate(iso_year, iso_week, iso_day):
 def groupByWeek(timestamp):
     from itertools import groupby
     isocalendar = [d.isocalendar() for d in timestamp]
-    truncDatetime = [isocalendarToDate(*i) for i in isocalendar]
+    truncDatetime = [isocalendarToDate(i[0], i[1], 1) for i in isocalendar]
     frequency = [(key, len(list(group))) for key, group in groupby(truncDatetime)]
     return [list(f) for f in zip(*frequency)]
 
@@ -81,35 +81,24 @@ def toNumHours(timestamps):
 def plot(data):
     fig = plt.figure()
     length = len(data)
-    import math
-    width = int(math.sqrt(length))
-    height = int((length / width) + (1 if length % width else 0))
-    if(width < height):
-        width,height = height,width
-
-    ax = None
     for d in range(0,length):
-        if ax : 
-            ax = plt.subplot(width, height, d+1, sharey = ax)
-        else:
-            plt.subplot(width, height, d+1)
-
         hours = toNumHours(data[d]['data'][0])
-        plt.plot(hours, data[d]['data'][1], 'g-')
+        plt.plot(hours, data[d]['data'][1], label=data[d]['label'])
         if data[d].has_key('ylabel'):
             plt.ylabel(data[d]['ylabel'])
         if data[d].has_key('xlabel'):
             plt.xlabel(data[d]['xlabel'])
         if data[d].has_key('title'):
             plt.title(data[d]['title'])
+        plt.legend(shadow=True, fancybox=True, loc='upper left')
     return plt
 
 if __name__ == '__main__':
     #datetime
     input = parseJson(loadFile())
     plt = plot([
-        {'data' : groupByWeek(input), 'title' : 'Demand curve', 'ylabel' : 'Request count', 'xlabel' : 'Week of year'},
-        {'data' : groupByHour(input), 'ylabel' : 'Request count', 'xlabel' : 'Hour since 2012-01-01'},
+        {'data' : groupByWeek(input), 'title' : 'Demand curve', 'ylabel' : 'Request count', 'label' : 'Weekly'},
+        {'data' : groupByHour(input), 'ylabel' : 'Request count', 'xlabel' : 'Hour since 2012-01-01', 'label' : 'Hourly'},
         ])
     plt.savefig(FIG_DIR+'demand_curve.png', bbox_inches='tight')
 

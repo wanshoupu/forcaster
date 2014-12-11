@@ -5,7 +5,8 @@
  
   {% if success %}
     <p>Thank you for your trainingData. The training result is as follows.</p>
-    <img src="{{ url_for('static', filename = imgname) }}" alt="Training result" style="width:608px;height:456">
+    <img src="{{ url_for('static', filename = img1) }}" alt="Weekly training result" style="width:608px;height:456">
+    <img src="{{ url_for('static', filename = img2) }}" alt="Overall training result" style="width:608px;height:456">
  
   {% else %}
  

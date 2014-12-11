@@ -5,7 +5,20 @@ from analyzer import plot,groupByWeek, groupByHour,toNumHours,STARTTIME,FIG_DIR
 STARTTIME = dt(2012,1,1,0,0,0)
 
 def augment(x):
-    return zip(*[range(0, len(x)), x])
+    return map(lambda e: (1,) + e, x )
+
+def ftrzWkdHr(timestamps):
+    isoweekFeature = map(lambda x : x.isocalendar()[2], timestamps)
+    hourOfDayFeature = map(lambda x :x.hour, timestamps)
+    return zip(isoweekFeature, hourOfDayFeature)
+
+def trimData(groupByWeek):
+    unabrdg = zip(*groupByWeek)
+    del(unabrdg[-1])
+    return zip(*unabrdg)
+
+def ftrzWk(timestamps):
+    return map(lambda x : (x,), toNumHours(timestamps))
 
 class Trainer(object):
     # data is list of timestamps in json format
@@ -18,34 +31,60 @@ class Trainer(object):
         # label are the labels of the data points
         # data and label should be of same length
         #get isoweek frequency count
-        self.weeklyCount = groupByWeek(timestamps)
-        self.weeklyModel = self.linReg(toNumHours(self.weeklyCount[0]), self.weeklyCount[1])
+        weeklyData = groupByWeek(timestamps)
+        trimWkData = trimData(weeklyData)
+        self.wkMdl = self.linReg(ftrzWk(trimWkData[0]), trimWkData[1])
+        if self.logger:
+            self.logger.info(self.wkMdl.coef_)
 
-        #get hourly count
-#        self.hourlyCount = groupByHour(timestamps)
+        hourlydata = groupByHour(timestamps)
+        self.adjHrCnt = self.adjWkTrend(hourlydata)
+        self.wkdHrMdl = self.linReg(ftrzWkdHr(hourlydata[0]), self.adjHrCnt)
+        if self.logger:
+            self.logger.info(self.wkdHrMdl.coef_)
+        str1 = self.predict(hourlydata[0])
+        self.logger.info('Shoupu Wan')
+        self.logger.info(str1)
+
         self.trained = True
-        self.predict(self.weeklyCount[0])
+
+        import time
+        imgname = time.strftime("%Y%m%d-%H%M%S")
+        img1,img2 = imgname+'1.png',imgname+'2.png'
         plt = plot([
-            {'data' : groupByWeek(timestamps), 'title' : 'Demand curve', 'ylabel' : 'Request count', 'xlabel' : 'Week of year'},
-            {'data' : [self.weeklyCount[0],self.predict(self.weeklyCount[0])], 'ylabel' : 'Prediction', 'xlabel' : 'Week of year'},
+            {'data' : weeklyData, 'title' : 'Weekly demand curve training error', 'ylabel' : 'Request count', 'label' : 'Original data'},
+            {'data' : [weeklyData[0],self.calcWeekFactor(weeklyData[0])], 'xlabel' : 'Hour', 'label' : 'Trained result'},
             ])
-        return plt
+        plt.savefig('resources/'+img1, bbox_inches='tight')
+
+        ovlPlt = plot([
+#            {'data' : hourlydata, 'title' : 'Overall demand curve training error', 'ylabel' : 'Request count', 'label' : 'Original data'},
+            {'data' : [hourlydata[0], self.predict(hourlydata[0])], 'xlabel' : 'Hour', 'label' : 'Trained result'},
+            ])
+        plt.savefig('resources/'+img2, bbox_inches='tight')
+        return img1,img2
+
+    def adjWkTrend(self, hourlydata):
+        hourlyprediction = self.calcWeekFactor(hourlydata[0])
+        return map(lambda x,y : x/y, hourlydata[1], hourlyprediction)
+
+    def calcWeekFactor(self, timestamps):
+        inputdata = ftrzWk(timestamps)
+        return self.wkMdl.predict(augment(inputdata))
+
+    def calcWeekdayHourFactor(self, timestamps):
+        inputdata = ftrzWkdHr(timestamps)
+        return self.wkdHrMdl.predict(augment(inputdata))
 
     def predict(self, timestamps):
-        if not self.trained:
+        if not (self.trained):
             return None
-        numHours = toNumHours(timestamps)
+        weekFactor = self.calcWeekFactor(timestamps)
+        weekdayHourFactor = self.calcWeekdayHourFactor(timestamps)
+        return map(lambda x,y : x * y, weekdayHourFactor, weekdayHourFactor)
 
-        if self.logger:
-            self.logger.info(self.weeklyModel.coef_)
-        if numHours:
-            weeklyDemand = self.weeklyModel.predict(augment(numHours))
-            return weeklyDemand / 7.0 / 24.0
-        else:
-            return None
-
-    @staticmethod
-    def linReg(x, y):
+#    @staticmethod
+    def linReg(self, x, y):
         from sklearn import linear_model
         # x: [0, 1, 2]
         # xaug: [[1, 0], [1, 1], [1, 2]]
