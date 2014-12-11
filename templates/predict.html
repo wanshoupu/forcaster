@@ -2,5 +2,14 @@
   
 {% block content %}
   <h2>Future demand prediction</h2>
-  <p>To be completed...</p>
+  <img src="{{ url_for('static', filename = img) }}" alt="Predicted result" style="width:608px;height:456"><br>
+  <table>
+    {% for dt,pr in predictions %}
+       <tr>
+            <th> {{ dt }} </th>
+            <td> {{ pr }} </td>
+       </tr>
+    {% endfor %}
+  </table>
+
 {% endblock %}

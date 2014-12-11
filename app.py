@@ -5,6 +5,7 @@ from logging.handlers import RotatingFileHandler
 from training import Trainer
 from analyzer import parseJson,plot,groupByHour
 from datetime import datetime as dt
+from datetime import timedelta as td
 
 UPLOAD_FOLDER = 'resources'
 
@@ -17,7 +18,16 @@ app.secret_key = 'development key'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER 
 
 trainer = Trainer(app)
-timestampes = []
+
+def makePlot(timestamps, predResult):
+    import time
+    imgname = time.strftime("%Y%m%d-%H%M%S")
+    img = imgname+'.png'
+    plt = plot([
+        {'data' : [timestamps,predResult], 'xlabel' : 'Hour', 'ylabel':'Request per hour', 'title':'Predictions of demand level','label' : 'Trained result'},
+        ])
+    plt.savefig('resources/'+img, bbox_inches='tight')
+    return img
 
 @app.route('/')
 def home():
@@ -25,15 +35,17 @@ def home():
   
 @app.route('/predict')
 def predict():
-  truncHours = [dt(2012, 4, 30, 10, 0), dt(2012, 4, 30, 22, 0)]
-  predictions = trainer.predict(truncHours)
-  app.logger.info('predictions:')
-  app.logger.info(predictions)
-  return render_template('predict.html')
+  dateGrid = [dt(2012, 5, 1) + td(hours=x) for x in range(0, 15 * 24)]
+  dateStr = map(lambda t:t.strftime("%Y-%m-%d %H:%M:%S"),dateGrid)
+  predResult = trainer.predict(dateGrid)
+  predStr = map(lambda x : '{:10.4f}'.format(x), predResult)
+  predictions= zip(dateStr, predStr)
+  img=makePlot(dateGrid,predResult)
+  return render_template('predict.html', predictions=predictions, img=img)
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
-  global timestampes
+  global trainer
   form = SubmitForm()
  
   if request.method == 'POST':

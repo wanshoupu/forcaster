@@ -7,15 +7,24 @@ STARTTIME = dt(2012,1,1,0,0,0)
 def aug(x):
     return map(lambda e: (1,) + e, x )
 
-def fturizWkdHr(timestamps):
+def dummyWkd(timestamps):
+    wkds = range(1,8)
     wkdFtr = map(lambda x : x.isocalendar()[2], timestamps)
+    return map(lambda x: map(lambda y: 1 if x == y else 0, wkds), wkdFtr)
+
+def dummyHr(timestamps):
+    hrs = range(1,25)
     hrFtr = map(lambda x :x.hour, timestamps)
-    return zip(wkdFtr, hrFtr)
+    return map(lambda x: map(lambda y: 1 if x == y else 0, hrs), hrFtr)
+
 
 def trimLst(groupByWeek):
     unabrdg = zip(*groupByWeek)
     del(unabrdg[-1])
     return zip(*unabrdg)
+
+def fturizWkdHr(timestamps):
+    return map(lambda x,y : tuple(x + y), dummyWkd(timestamps), dummyHr(timestamps))
 
 def fturizWk(timestamps):
     return map(lambda x : (x,), toNumHours(timestamps))
@@ -64,14 +73,18 @@ class Trainer(object):
         if not (self.trained):
             return None
         return map(lambda x,y : x * y, self.calcDayHrFctr(timestamps), self.calcWkFctr(timestamps))
-        weekFactor = self.calcWkFctr(timestamps)
-        dayHrFctr = self.calcDayHrFctr(timestamps)
-        return map(lambda x,y : x * y, dayHrFctr, dayHrFctr)
 
     @staticmethod
     def linReg(x, y):
         from sklearn import linear_model
         clf = linear_model.LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
+        clf.fit (aug(x), y)
+        return clf
+
+    @staticmethod
+    def lasso(x, y):
+        from sklearn import linear_model
+        clf = linear_model.Lasso(alpha=0.0)
         clf.fit (aug(x), y)
         return clf
 
